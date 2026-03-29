@@ -1,58 +1,42 @@
 ---
 title: React Integration
-description: Learn how to use QuantaJS with React applications.
+description: Use QuantaJS with React using provider-based and direct-store patterns.
 ---
 
 # React Integration
 
-QuantaJS provides seamless React integration through the `@quantajs/react` package, offering hooks, components, and utilities designed specifically for React applications.
+`@quantajs/react` provides React-specific hooks and components on top of `@quantajs/core`.
 
 ## Installation
-
-First, install both the core and React packages:
 
 ```bash
 npm install @quantajs/react @quantajs/core
 # or
-yarn add @quantajs/react @quantajs/core
-# or
 pnpm add @quantajs/react @quantajs/core
+# or
+yarn add @quantajs/react @quantajs/core
 ```
 
-## Basic Setup
+## Provider Pattern
 
-### Provider Pattern
-
-Wrap your app with `QuantaProvider` to provide stores to all child components. The `stores` prop accepts an object where keys are store names and values are store instances:
-
-```javascript
+```tsx
 import { createStore, QuantaProvider, useStore } from '@quantajs/react';
 
 const counterStore = createStore('counter', {
   state: () => ({ count: 0 }),
-  getters: {
-    doubleCount: (state) => state.count * 2,
-  },
   actions: {
-    increment() { this.count++; },
-    decrement() { this.count--; },
+    increment() {
+      this.count++;
+    },
   },
 });
 
 function Counter() {
-  const store = useStore('counter');
-  
-  return (
-    <div>
-      <p>Count: {store.count}</p>
-      <p>Double: {store.doubleCount}</p>
-      <button onClick={() => store.increment()}>+</button>
-      <button onClick={() => store.decrement()}>-</button>
-    </div>
-  );
+  const counter = useStore('counter');
+  return <button onClick={() => counter.increment()}>{counter.count}</button>;
 }
 
-function App() {
+export default function App() {
   return (
     <QuantaProvider stores={{ counter: counterStore }}>
       <Counter />
@@ -61,378 +45,102 @@ function App() {
 }
 ```
 
-## Hooks
+## Hook Reference (Practical)
 
-### useStore
+### `useStore(name)`
 
-Access a store from the nearest `QuantaProvider` by providing the store name. Optionally, you can provide a selector function to pick specific parts of the store:
+Returns the full store instance from `QuantaProvider` context.
 
-```javascript
-import { useStore } from '@quantajs/react';
-
-function UserProfile() {
-  // Access entire store
-  const store = useStore('user');
-  
-  return (
-    <div>
-      <h1>{store.user.name}</h1>
-      <p>Email: {store.user.email}</p>
-      <button onClick={() => store.updateProfile({ name: 'New Name' })}>
-        Update Name
-      </button>
-    </div>
-  );
-}
-
-function UserName() {
-  // Use selector to only re-render when name changes
-  const name = useStore('user', store => store.user?.name);
-  
-  return <h1>{name || 'Guest'}</h1>;
-}
+```tsx
+const userStore = useStore('user');
+userStore.updateProfile({ name: 'Ava' });
 ```
 
-### useQuantaStore
+### `useStoreSelector(name, selector)`
 
-Subscribe to a specific store with optional selector for performance:
+Returns selected data from a context store and re-renders only when that selection changes.
 
-```javascript
+```tsx
+import { useStoreSelector } from '@quantajs/react';
+
+const userName = useStoreSelector('user', (s) => s.user?.name);
+```
+
+### `useQuantaStore(store)`
+
+Subscribes to a direct store reference and returns the full store.
+
+```tsx
 import { useQuantaStore } from '@quantajs/react';
 
-function TodoList() {
-  // Subscribe to the entire store
-  const store = useQuantaStore(todoStore);
-  
-  return (
-    <ul>
-      {store.todos.map(todo => (
-        <li key={todo.id}>{todo.text}</li>
-      ))}
-    </ul>
-  );
-}
-
-function TodoCount() {
-  // Only re-render when count changes
-  const count = useQuantaStore(todoStore, store => store.todos.length);
-  
-  return <p>Total todos: {count}</p>;
-}
-
-function CompletedCount() {
-  // Only re-render when completed count changes
-  const completed = useQuantaStore(todoStore, store => 
-    store.todos.filter(todo => todo.done).length
-  );
-  
-  return <p>Completed: {completed}</p>;
-}
+const todos = useQuantaStore(todoStore);
 ```
 
-### useCreateStore
+### `useQuantaSelector(store, selector)`
 
-Create a component-scoped store that's automatically cleaned up:
+Selector variant for direct store references.
 
-```javascript
+```tsx
+import { useQuantaSelector } from '@quantajs/react';
+
+const todoCount = useQuantaSelector(todoStore, (s) => s.todos.length);
+```
+
+### `useCreateStore(name, state, getters?, actions?)`
+
+Creates a component-scoped store instance and destroys it on unmount.
+
+```tsx
 import { useCreateStore } from '@quantajs/react';
 
-function TodoComponent() {
-  const todoStore = useCreateStore(
-    'todos',
-    () => ({ todos: [] }),
+function DraftEditor() {
+  const draft = useCreateStore(
+    'draft-editor',
+    () => ({ text: '' }),
     undefined,
     {
-      addTodo(text) {
-        this.todos.push({ id: Date.now(), text, done: false });
+      setText(value: string) {
+        this.text = value;
       },
-      toggleTodo(id) {
-        const todo = this.todos.find(t => t.id === id);
-        if (todo) todo.done = !todo.done;
-      },
-    }
-  );
-
-  return (
-    <div>
-      <button onClick={() => todoStore.addTodo('New task')}>
-        Add Todo
-      </button>
-      <p>Todos: {todoStore.todos.length}</p>
-      <ul>
-        {todoStore.todos.map(todo => (
-          <li 
-            key={todo.id}
-            onClick={() => todoStore.toggleTodo(todo.id)}
-            style={{ textDecoration: todo.done ? 'line-through' : 'none' }}
-          >
-            {todo.text}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-## Advanced Patterns
-
-### Multiple Stores
-
-You can provide multiple stores to `QuantaProvider` using the `stores` prop object:
-
-```javascript
-import { createStore, QuantaProvider, useStore } from '@quantajs/react';
-
-const userStore = createStore('user', {
-  state: () => ({ user: null, isLoading: false }),
-  actions: {
-    async login(credentials) {
-      this.isLoading = true;
-      // API call...
-      this.user = userData;
-      this.isLoading = false;
     },
-  },
-});
-
-const todoStore = createStore('todos', {
-  state: () => ({ todos: [] }),
-  actions: {
-    addTodo(text) {
-      this.todos.push({ id: Date.now(), text, done: false });
-    },
-  },
-});
-
-function App() {
-  return (
-    <QuantaProvider stores={{ user: userStore, todos: todoStore }}>
-      <UserDashboard />
-    </QuantaProvider>
   );
-}
 
-function UserDashboard() {
-  const userStore = useStore('user');
-  const todoStore = useStore('todos');
-  
-  return (
-    <div>
-      <UserInfo />
-      <TodoList />
-    </div>
-  );
+  return <textarea value={draft.text} onChange={(e) => draft.setText(e.currentTarget.value)} />;
 }
 ```
 
-### Custom Hooks
+## Multiple Stores
 
-Create custom hooks to encapsulate store logic:
-
-```javascript
-function useUser() {
-  const store = useStore('user');
-  
-  return {
-    user: store.user,
-    isLoading: store.isLoading,
-    login: store.login,
-    logout: store.logout,
-    isAuthenticated: !!store.user,
-  };
-}
-
-function useTodos() {
-  const store = useStore('todos');
-  
-  return {
-    todos: store.todos,
-    addTodo: store.addTodo,
-    toggleTodo: store.toggleTodo,
-    removeTodo: store.removeTodo,
-    completedCount: store.todos.filter(t => t.done).length,
-  };
-}
-
-function UserProfile() {
-  const { user, isAuthenticated, login } = useUser();
-  
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={login} />;
-  }
-  
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <TodoManager />
-    </div>
-  );
-}
-
-function TodoManager() {
-  const { todos, addTodo, completedCount } = useTodos();
-  
-  return (
-    <div>
-      <p>Completed: {completedCount}/{todos.length}</p>
-      <AddTodoForm onAdd={addTodo} />
-      <TodoList todos={todos} />
-    </div>
-  );
-}
+```tsx
+<QuantaProvider stores={{ user: userStore, todos: todoStore }}>
+  <Dashboard />
+</QuantaProvider>
 ```
 
-### Performance Optimization
+Then consume by name:
 
-Use selectors to prevent unnecessary re-renders:
-
-```javascript
-function ExpensiveComponent() {
-  // Only re-render when specific values change
-  const expensiveValue = useQuantaStore(store, store => 
-    store.items
-      .filter(item => item.active)
-      .map(item => item.value)
-      .reduce((sum, val) => sum + val, 0)
-  );
-  
-  return <div>Expensive calculation: {expensiveValue}</div>;
-}
-
-function OptimizedList() {
-  // Only re-render when the array length changes
-  const itemCount = useQuantaStore(store, store => store.items.length);
-  
-  return (
-    <div>
-      <p>Total items: {itemCount}</p>
-      <ItemList />
-    </div>
-  );
-}
-
-function ItemList() {
-  // Only re-render when items change
-  const items = useQuantaStore(store, store => store.items);
-  
-  return (
-    <ul>
-      {items.map(item => (
-        <Item key={item.id} item={item} />
-      ))}
-    </ul>
-  );
-}
+```tsx
+const user = useStore('user');
+const todos = useStore('todos');
 ```
 
-## TypeScript Support
-
-Full TypeScript support with proper type inference:
-
-```typescript
-interface UserState {
-  user: User | null;
-  isLoading: boolean;
-}
-
-interface UserGetters {
-  isAuthenticated: boolean;
-}
-
-interface UserActions {
-  login(credentials: LoginCredentials): Promise<void>;
-  logout(): void;
-}
-
-const userStore = createStore<UserState, UserGetters, UserActions>('user', {
-  state: () => ({ user: null, isLoading: false }),
-  getters: {
-    isAuthenticated: (state) => !!state.user,
-  },
-  actions: {
-    async login(credentials) {
-      this.isLoading = true;
-      // API call...
-      this.user = userData;
-      this.isLoading = false;
-    },
-    logout() {
-      this.user = null;
-    },
-  },
-});
-
-function UserComponent() {
-  const store = useStore('user'); // Fully typed!
-  
-  return (
-    <div>
-      {store.isAuthenticated ? (
-        <p>Welcome, {store.user!.name}</p>
-      ) : (
-        <LoginForm />
-      )}
-    </div>
-  );
-}
-```
-
-## DevTools Integration
-
-QuantaJS DevTools provide a powerful debugging interface for inspecting stores and monitoring state changes. In React applications, you can use the `QuantaDevTools` component:
+## React DevTools Component
 
 ```tsx
 import { QuantaDevTools } from '@quantajs/react';
 
-function App() {
+function AppShell() {
   return (
-    <QuantaProvider stores={{ user: userStore, todos: todoStore }}>
-      <YourApp />
+    <>
+      <App />
       <QuantaDevTools />
-    </QuantaProvider>
+    </>
   );
 }
 ```
 
-The `QuantaDevTools` component automatically:
-- Detects the development environment
-- Connects to all stores in your `QuantaProvider`
-- Provides real-time state inspection
-- Logs all actions with timestamps and payloads
+## Tips
 
-### DevTools Features
-
-- **Store Inspector**: View live state, getters, and actions for each store
-- **Action Log**: Track all state mutations with timestamps
-- **Persistence Management**: View and manage persistence status
-- **Search**: Quickly find stores by name
-
-For more information, see the [DevTools Guide](/docs/guides/devtools).
-
-## Best Practices
-
-### Store Organization
-
-- Keep stores focused on specific domains
-- Use descriptive store names
-- Group related state, getters, and actions together
-
-### Performance
-
-- Use selectors with `useQuantaStore` for fine-grained updates
-- Avoid watching entire large objects
-- Use `useCreateStore` for component-scoped state
-
-### Error Handling
-
-- Handle async actions properly with loading states
-- Provide fallback values for computed properties
-- Use TypeScript for better error catching
-
-## Learn More
-
-- [Core Concepts](/docs/guides/reactive-state) - Understanding reactivity
-- [Managing Stores](/docs/guides/managing-stores) - Store management patterns
-- [DevTools Guide](/docs/guides/devtools) - Debugging with DevTools
-- [API Reference](/docs/api/create-store) - Complete API documentation 
+- Prefer `useStoreSelector` / `useQuantaSelector` for large views.
+- Keep store names stable and unique.
+- For temporary component state with actions/getters, prefer `useCreateStore`.

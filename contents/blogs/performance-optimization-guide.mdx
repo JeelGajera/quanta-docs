@@ -38,7 +38,7 @@ function UserProfile() {
 ```javascript
 function UserProfile() {
   // Only re-renders when name changes
-  const name = useStore('user', store => store.name);
+  const name = useStoreSelector('user', store => store.name);
   
   return <div>{name}</div>;
 }
@@ -62,7 +62,7 @@ function TodoList() {
 
 // ✅ Good: Only re-renders when todos array changes
 function TodoList() {
-  const todos = useStore('todos', store => store.todos);
+  const todos = useStoreSelector('todos', store => store.todos);
   
   return (
     <ul>
@@ -75,7 +75,7 @@ function TodoList() {
 
 // ✅ Better: Individual items only re-render when their data changes
 function TodoItem({ todoId }) {
-  const todo = useStore('todos', store => 
+  const todo = useStoreSelector('todos', store => 
     store.todos.find(t => t.id === todoId)
   );
   
@@ -121,7 +121,7 @@ const todoStore = createStore('todos', {
 ```javascript
 // ❌ Bad: Recalculates on every render
 function TodoStats() {
-  const todos = useStore('todos', store => store.todos);
+  const todos = useStoreSelector('todos', store => store.todos);
   const completed = todos.filter(t => t.done).length; // Expensive!
   
   return <div>Completed: {completed}</div>;
@@ -129,7 +129,7 @@ function TodoStats() {
 
 // ✅ Good: Use computed getter
 function TodoStats() {
-  const completedCount = useStore('todos', store => store.completedCount);
+  const completedCount = useStoreSelector('todos', store => store.completedCount);
   
   return <div>Completed: {completedCount}</div>;
 }
@@ -193,7 +193,7 @@ const settingsStore = createStore('settings', { /* ... */ });
 
 // Components only subscribe to what they need
 function CartSummary() {
-  const total = useStore('cart', store => store.total);
+  const total = useStoreSelector('cart', store => store.total);
   return <div>Total: ${total}</div>;
 }
 ```
@@ -355,7 +355,7 @@ const todoStore = createStore('todos', {
 ```javascript
 // ✅ Good: Direct store reference with selector
 function CartIcon() {
-  const itemCount = useQuantaStore(cartStore, store => store.itemCount);
+  const itemCount = useQuantaSelector(cartStore, store => store.itemCount);
   return <span>{itemCount}</span>;
 }
 
@@ -368,7 +368,7 @@ function CartIcon() {
 import { useMemo } from 'react';
 
 function ExpensiveComponent() {
-  const todos = useStore('todos', store => store.todos);
+  const todos = useStoreSelector('todos', store => store.todos);
   
   // Memoize expensive computations
   const expensiveValue = useMemo(() => {
@@ -441,7 +441,7 @@ const productStore = createStore('products', {
 // Optimized components
 function ProductList() {
   // Only subscribes to filtered products
-  const products = useStore('products', store => store.filteredProducts);
+  const products = useStoreSelector('products', store => store.filteredProducts);
   
   return (
     <div>
@@ -454,7 +454,7 @@ function ProductList() {
 
 function ProductCard({ productId }) {
   // Individual cards only re-render when their product changes
-  const product = useStore('products', store => 
+  const product = useStoreSelector('products', store => 
     store.products.find(p => p.id === productId)
   );
   
@@ -463,8 +463,8 @@ function ProductCard({ productId }) {
 
 function ProductFilters() {
   // Only subscribes to filter state
-  const filters = useStore('products', store => store.filters);
-  const updateFilters = useStore('products', store => store.updateFilters);
+  const filters = useStoreSelector('products', store => store.filters);
+  const updateFilters = useStoreSelector('products', store => store.updateFilters);
   
   return (
     <div>

@@ -302,11 +302,11 @@ function Counter() {
 ### 2. Performance Optimization with Selectors
 
 ```javascript
-import { useQuantaStore } from '@quantajs/react';
+import { useQuantaSelector } from '@quantajs/react';
 
 function TodoList() {
   // Only re-render when todos change
-  const todos = useQuantaStore(todoStore, store => store.filteredTodos);
+  const todos = useQuantaSelector(todoStore, store => store.filteredTodos);
   
   return (
     <ul>
@@ -319,7 +319,7 @@ function TodoList() {
 
 function TodoStats() {
   // Only re-render when counts change
-  const stats = useQuantaStore(todoStore, store => ({
+  const stats = useQuantaSelector(todoStore, store => ({
     completed: store.completedCount,
     pending: store.pendingCount,
   }));
@@ -334,7 +334,7 @@ function TodoStats() {
 
 function ExpensiveComponent() {
   // Only re-render when specific values change
-  const expensiveValue = useQuantaStore(store, store => 
+  const expensiveValue = useQuantaSelector(store, store => 
     store.items
       .filter(item => item.active)
       .map(item => item.value)

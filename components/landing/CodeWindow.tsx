@@ -5,29 +5,6 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";
 
-// Manual high-fidelity syntax highlighting tokens
-// This simulates VS Code Dark+ theme
-const getHighlightedHtml = () => {
-    return `
-<span style="color: #C586C0">import</span> <span style="color: #FFD700">{</span> <span style="color: #9CDCFE">createStore</span> <span style="color: #FFD700">}</span> <span style="color: #C586C0">from</span> <span style="color: #CE9178">'@quantajs/core'</span><span style="color: #CCCCCC">;</span>
-
-<span style="color: #569CD6">const</span> <span style="color: #4FC1FF">counter</span> <span style="color: #D4D4D4">=</span> <span style="color: #DCDCAA">createStore</span><span style="color: #FFD700">(</span><span style="color: #CE9178">'counter'</span><span style="color: #CCCCCC">,</span> <span style="color: #FFD700">{</span>
-  <span style="color: #DCDCAA">state</span><span style="color: #9CDCFE">:</span> <span style="color: #FFD700">()</span> <span style="color: #569CD6">=&gt;</span> <span style="color: #DA70D6">({</span> <span style="color: #9CDCFE">count</span><span style="color: #9CDCFE">:</span> <span style="color: #B5CEA8">0</span> <span style="color: #DA70D6">})</span><span style="color: #CCCCCC">,</span>
-  <span style="color: #9CDCFE">getters</span><span style="color: #9CDCFE">:</span> <span style="color: #DA70D6">{</span>
-    <span style="color: #DCDCAA">doubleCount</span><span style="color: #9CDCFE">:</span> <span style="color: #FFD700">(</span><span style="color: #9CDCFE">state</span><span style="color: #FFD700">)</span> <span style="color: #569CD6">=&gt;</span> <span style="color: #9CDCFE">state</span><span style="color: #CCCCCC">.</span><span style="color: #9CDCFE">count</span> <span style="color: #D4D4D4">*</span> <span style="color: #B5CEA8">2</span><span style="color: #CCCCCC">,</span>
-  <span style="color: #DA70D6">}</span><span style="color: #CCCCCC">,</span>
-  <span style="color: #9CDCFE">actions</span><span style="color: #9CDCFE">:</span> <span style="color: #DA70D6">{</span>
-    <span style="color: #DCDCAA">increment</span><span style="color: #FFD700">()</span> <span style="color: #179fff">{</span>
-      <span style="color: #569CD6">this</span><span style="color: #CCCCCC">.</span><span style="color: #9CDCFE">count</span><span style="color: #D4D4D4">++</span><span style="color: #CCCCCC">;</span>
-    <span style="color: #179fff">}</span><span style="color: #CCCCCC">,</span>
-    <span style="color: #DCDCAA">decrement</span><span style="color: #FFD700">()</span> <span style="color: #179fff">{</span>
-      <span style="color: #569CD6">this</span><span style="color: #CCCCCC">.</span><span style="color: #9CDCFE">count</span><span style="color: #D4D4D4">--</span><span style="color: #CCCCCC">;</span>
-    <span style="color: #179fff">}</span><span style="color: #CCCCCC">,</span>
-  <span style="color: #DA70D6">}</span><span style="color: #CCCCCC">,</span>
-<span style="color: #FFD700">}</span><span style="color: #FFD700">)</span><span style="color: #CCCCCC">;</span>
-`;
-};
-
 export default function CodeWindow({ className }: { className?: string }) {
     const codeRef = useRef<HTMLPreElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);

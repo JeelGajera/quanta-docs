@@ -74,7 +74,7 @@ function Counter() {
 
 ```javascript
 function Counter() {
-  const count = useStore('counter', store => store.count); // ✅ Even better
+  const count = useStoreSelector('counter', store => store.count); // ✅ Even better
   return <div>{count}</div>;
 }
 ```
@@ -170,7 +170,7 @@ Direct mutation is fine for simple cases, but actions provide:
 ```javascript
 // Expensive calculation in component
 function TodoStats() {
-  const todos = useStore('todos', store => store.todos);
+  const todos = useStoreSelector('todos', store => store.todos);
   const completed = todos.filter(t => t.done).length; // ❌ Recalculates every render
   return <div>Completed: {completed}</div>;
 }
@@ -190,7 +190,7 @@ const todoStore = createStore('todos', {
 });
 
 function TodoStats() {
-  const completed = useStore('todos', store => store.completedCount); // ✅ Uses cached value
+  const completed = useStoreSelector('todos', store => store.completedCount); // ✅ Uses cached value
   return <div>Completed: {completed}</div>;
 }
 ```
@@ -383,7 +383,7 @@ Use selectors for fine-grained subscriptions:
 
 ```javascript
 function UserName() {
-  const name = useStore('user', store => store.name); // ✅ Only subscribes to name
+  const name = useStoreSelector('user', store => store.name); // ✅ Only subscribes to name
   return <div>{name}</div>;
 }
 ```
@@ -404,8 +404,8 @@ function UserProfile() {
 
 // ✅ Good: Only re-renders when name or email changes
 function UserProfile() {
-  const name = useStore('user', store => store.name);
-  const email = useStore('user', store => store.email);
+  const name = useStoreSelector('user', store => store.name);
+  const email = useStoreSelector('user', store => store.email);
   return (
     <div>
       <div>Name: {name}</div>
@@ -618,7 +618,7 @@ function TemporaryComponent() {
 ```javascript
 // Selector that creates new object every time
 function Component() {
-  const data = useStore('store', store => ({
+  const data = useStoreSelector('store', store => ({
     a: store.a,
     b: store.b,
   })); // ❌ New object every time = always re-renders
@@ -633,8 +633,8 @@ Use stable selectors or select individual values:
 ```javascript
 // ✅ Select individual values
 function Component() {
-  const a = useStore('store', store => store.a);
-  const b = useStore('store', store => store.b);
+  const a = useStoreSelector('store', store => store.a);
+  const b = useStoreSelector('store', store => store.b);
   return <div>{/* ... */}</div>;
 }
 
@@ -658,7 +658,7 @@ actions: {
 }
 
 // 2. Use selectors
-const count = useStore('counter', store => store.count);
+const count = useStoreSelector('counter', store => store.count);
 
 // 3. Use getters for computed values
 getters: {

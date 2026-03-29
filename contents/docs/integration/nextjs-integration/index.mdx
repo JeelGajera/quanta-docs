@@ -284,12 +284,12 @@ Use selectors to prevent unnecessary re-renders:
 ```javascript
 // components/CartIcon.jsx
 'use client';
-import { useQuantaStore } from '@quantajs/react';
+import { useQuantaSelector } from '@quantajs/react';
 import { cartStore } from '@/stores/cartStore';
 
 export default function CartIcon() {
   // Only re-render when totalItems or isOpen changes
-  const { totalItems, isOpen } = useQuantaStore(cartStore, store => ({
+  const { totalItems, isOpen } = useQuantaSelector(cartStore, store => ({
     totalItems: store.totalItems,
     isOpen: store.isOpen,
   }));

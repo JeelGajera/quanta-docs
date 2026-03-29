@@ -2,13 +2,13 @@
 
 ![QuantaJS Docs Banner](./public/img/quantajs_banner.png)
 
-Welcome to the official documentation site for [QuantaJS](https://github.com/quanta-js/quanta), a compact, scalable, and developer-friendly state management library for JavaScript. This documetation site, built with Next.js and MDX, provides a sleek, responsive, and feature-rich experience to explore QuantaJS’s reactivity system, API, and guides all while the library is in its exciting beta phase
+Welcome to the official documentation site for [QuantaJS](https://github.com/quanta-js/quanta), a compact, scalable, and developer-friendly state management library for JavaScript. This documentation site, built with Next.js and MDX, provides a sleek, responsive, and feature-rich experience to explore QuantaJS reactivity, API, integrations, and production guides for the stable `2.x` release line.
 
 ## 📦 Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or higher recommended for Next.js 15)
+- Node.js (v20 or higher recommended for Next.js 16)
 - npm (v9 or higher)
 
 ### Installation

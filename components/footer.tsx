@@ -4,22 +4,13 @@ import Link from "next/link";
 import { buttonVariants } from "./ui/button";
 import { StarIcon } from "lucide-react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
-
-import { useEffect, useState } from "react";
 
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function Footer() {
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const pathname = usePathname();
   const isHome = pathname === "/";
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   return (
     <footer className={cn(

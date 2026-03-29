@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { LocalStorageAdapter, logger } from "@quantajs/core";
+import { LocalStorageAdapter } from "@quantajs/core";
 import { createStore } from "@quantajs/react";
 
 export const userPreferencesStore = createStore("userPreferencesStore", {

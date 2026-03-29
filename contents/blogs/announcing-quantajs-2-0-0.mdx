@@ -1,0 +1,129 @@
+---
+title: "Announcing QuantaJS 2.0.0: First Stable Release"
+description: "QuantaJS 2.0.0 is now stable with hardened reactivity semantics, improved React hooks, production-ready DevTools tests, and stronger release quality gates."
+date: "30-03-2026"
+authors:
+  - username: "Jeel Gajera"
+    handle: "jeelgajera"
+    handleUrl: "https://github.com/jeelgajera"
+    avatar: "https://avatars.githubusercontent.com/u/83470656?v=4"
+cover: "https://images.pexels.com/photos/29518292/pexels-photo-29518292.jpeg"
+---
+
+# Announcing QuantaJS 2.0.0
+
+QuantaJS `2.0.0` is officially stable.
+
+This release focuses on correctness, predictable reactivity semantics, React stability, and production-grade developer tooling.
+If you tried QuantaJS during beta/RC, this is the polished build designed for real apps.
+
+## QuantaJS Superpowers (Now Hardened)
+
+### 1) Deep reactivity that stays correct under pressure
+
+`Map`/`Set` invalidation is now stricter and consistent across `set/add/delete/clear` paths.
+That means no stale reads for `get`, `has`, `size`, and iteration subscribers.
+
+```ts
+import { createStore } from "@quantajs/core";
+import { reactiveEffect } from "@quantajs/core";
+
+const inventory = createStore("inventory", {
+  state: () => ({
+    items: new Map<string, number>([
+      ["apple", 3],
+      ["banana", 2],
+    ]),
+  }),
+});
+
+reactiveEffect(() => {
+  // Re-runs correctly when clear() happens in 2.0.0
+  console.log("apple qty:", inventory.items.get("apple"));
+});
+
+inventory.items.clear();
+```
+
+### 2) React selectors built for fast update streams
+
+Hooks now behave more predictably with rapid updates, callback exceptions, and cleanup on rerender/unmount.
+
+```tsx
+import { useStoreSelector } from "@quantajs/react";
+import { counterStore } from "./stores/counter";
+
+export function CounterValue() {
+  // Stable under rapid sequential updates
+  const count = useStoreSelector("counter", (s) => s.count);
+  const doubled = useStoreSelector("counter", (s) => s.count * 2);
+
+  return <p>{count} / {doubled}</p>;
+}
+```
+
+### 3) Persistence with deterministic failure behavior
+
+Persistence error paths are now consistent with logger hooks and `onError` callbacks.
+Malformed payloads, validator failures, and transform issues are handled in a deterministic way.
+
+```ts
+import { createStore } from "@quantajs/core";
+import { LocalStorageAdapter } from "@quantajs/core";
+
+const sessionStore = createStore("session", {
+  state: () => ({ token: "", expiresAt: 0 }),
+  persist: {
+    adapter: new LocalStorageAdapter("session-v2"),
+    validate: (data) =>
+      typeof data.token === "string" && typeof data.expiresAt === "number",
+    onError: (error) => {
+      // Centralized and predictable error handling
+      console.error("Persistence error:", error.message);
+    },
+  },
+});
+```
+
+### 4) DevTools that are test-backed and safer in production
+
+`@quantajs/devtools` now includes first-class automated tests for bridge event handling and serialization safety (including circular/deep object edge cases), plus hardened mount/unmount behavior.
+
+
+## Package Highlights
+
+### `@quantajs/core`
+
+- Collection trigger semantics unified for `Map` and `Set`
+- Effect lifecycle internals simplified for clearer stop-state ownership
+- Batch failure behavior hardened so queued effects do not execute after failure
+- Deep-trigger/parent-tracking interactions audited for nested object + collection flows
+
+### `@quantajs/react`
+
+- `useStore`, `useStoreSelector`, `useWatch`, and selector hooks now provide more consistent failures and context
+- Improved subscription cleanup guarantees under exceptions and rapid updates
+- Safer generic defaults to reduce overly-permissive inference
+
+### `@quantajs/devtools`
+
+- Automated test coverage for bridge processing, state history behavior, and serializers
+- Safer mount/unmount behavior for missing targets and repeated lifecycle calls
+- Reduced runtime console noise with fail-safe handling paths
+
+## Upgrade Notes
+
+If you used pre-release builds, review:
+
+- `Map.clear()` / `Set.clear()` subscriber invalidation behavior
+- React selector/watch behavior under rapid updates
+- Persistence error routing (`onError` + logger hooks)
+
+## Start Building
+
+- [Quick Start](/docs/getting-started/quick-start-guide)
+- [React Integration](/docs/integration/react-integration)
+- [Persistence Guide](/docs/guides/persistence)
+- [DevTools Guide](/docs/guides/devtools)
+
+Thanks to everyone who tested beta and RC builds and helped shape this stable release.

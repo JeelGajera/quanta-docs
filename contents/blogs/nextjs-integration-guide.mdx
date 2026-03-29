@@ -227,14 +227,14 @@ For components that need access to multiple stores:
 ```typescript:app/components/header.tsx
 'use client';
 
-import { useQuantaStore } from '@quantajs/react';
+import { useQuantaSelector } from '@quantajs/react';
 import { userStore } from '@/lib/stores/user-store';
 import { cartStore } from '@/lib/stores/cart-store';
 
 export function Header() {
-  const user = useQuantaStore(userStore, store => store.user);
-  const cartItems = useQuantaStore(cartStore, store => store.totalItems);
-  const isCartOpen = useQuantaStore(cartStore, store => store.isOpen);
+  const user = useQuantaSelector(userStore, store => store.user);
+  const cartItems = useQuantaSelector(cartStore, store => store.totalItems);
+  const isCartOpen = useQuantaSelector(cartStore, store => store.isOpen);
   
   return (
     <header>
@@ -256,12 +256,12 @@ Use selectors to prevent unnecessary re-renders:
 ```typescript:app/components/cart-summary.tsx
 'use client';
 
-import { useQuantaStore } from '@quantajs/react';
+import { useQuantaSelector } from '@quantajs/react';
 import { cartStore } from '@/lib/stores/cart-store';
 
 export function CartSummary() {
   // Only re-render when totalPrice changes
-  const totalPrice = useQuantaStore(cartStore, store => store.totalPrice);
+  const totalPrice = useQuantaSelector(cartStore, store => store.totalPrice);
   
   return (
     <div>

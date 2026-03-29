@@ -399,7 +399,7 @@ Use selectors to prevent unnecessary re-renders:
 // In React components
 function TodoList() {
   // Only re-render when todos change
-  const todos = useQuantaStore(todoStore, store => store.filteredTodos);
+  const todos = useQuantaSelector(todoStore, store => store.filteredTodos);
   
   return (
     <ul>
@@ -412,7 +412,7 @@ function TodoList() {
 
 function TodoStats() {
   // Only re-render when counts change
-  const stats = useQuantaStore(todoStore, store => ({
+  const stats = useQuantaSelector(todoStore, store => ({
     completed: store.completedCount,
     pending: store.pendingCount,
   }));

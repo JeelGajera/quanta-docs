@@ -528,7 +528,7 @@ A full-featured todo application using QuantaJS React integration.
 
 ```jsx
 import React, { useState } from 'react';
-import { createStore, QuantaProvider, useStore, useQuantaStore } from '@quantajs/react';
+import { createStore, QuantaProvider, useStore, useQuantaSelector } from '@quantajs/react';
 
 // Create the todo store
 const todoStore = createStore('todos', {
@@ -619,7 +619,7 @@ function TodoItem({ todo }) {
 
 // Todo List Component
 function TodoList() {
-  const todos = useQuantaStore(todoStore, store => store.filteredTodos);
+  const todos = useQuantaSelector(todoStore, store => store.filteredTodos);
   
   if (todos.length === 0) {
     return <p style={{ textAlign: 'center', color: '#888' }}>No todos found</p>;
@@ -636,10 +636,10 @@ function TodoList() {
 
 // Filter Component
 function TodoFilter() {
-  const filter = useQuantaStore(todoStore, store => store.filter);
-  const completedCount = useQuantaStore(todoStore, store => store.completedCount);
-  const pendingCount = useQuantaStore(todoStore, store => store.pendingCount);
-  const totalCount = useQuantaStore(todoStore, store => store.todos.length);
+  const filter = useQuantaSelector(todoStore, store => store.filter);
+  const completedCount = useQuantaSelector(todoStore, store => store.completedCount);
+  const pendingCount = useQuantaSelector(todoStore, store => store.pendingCount);
+  const totalCount = useQuantaSelector(todoStore, store => store.todos.length);
   
   const store = useStore('todos');
   
@@ -791,7 +791,7 @@ A comprehensive user dashboard demonstrating multiple stores and complex state m
 
 ```jsx
 import React from 'react';
-import { createStore, QuantaProvider, useStore, useQuantaStore } from '@quantajs/react';
+import { createStore, QuantaProvider, useStore, useQuantaSelector } from '@quantajs/react';
 
 // User store
 const userStore = createStore('user', {
@@ -952,8 +952,8 @@ function LoginForm() {
 
 // Stats Component
 function Stats() {
-  const stats = useQuantaStore(dashboardStore, store => store.stats);
-  const isLoading = useQuantaStore(dashboardStore, store => store.isLoading);
+  const stats = useQuantaSelector(dashboardStore, store => store.stats);
+  const isLoading = useQuantaSelector(dashboardStore, store => store.isLoading);
   
   if (isLoading) {
     return <div>Loading stats...</div>;
@@ -1008,7 +1008,7 @@ function Stats() {
 
 // Recent Activity Component
 function RecentActivity() {
-  const activity = useQuantaStore(dashboardStore, store => store.recentActivity);
+  const activity = useQuantaSelector(dashboardStore, store => store.recentActivity);
   
   return (
     <div style={{ 
@@ -1041,7 +1041,7 @@ function RecentActivity() {
 
 // Dashboard Component
 function Dashboard() {
-  const user = useQuantaStore(userStore, store => store.user);
+  const user = useQuantaSelector(userStore, store => store.user);
   const store = useStore('user');
   
   React.useEffect(() => {
@@ -1083,7 +1083,7 @@ function Dashboard() {
 
 // Main App Component
 function App() {
-  const isAuthenticated = useQuantaStore(userStore, store => store.isAuthenticated);
+  const isAuthenticated = useQuantaSelector(userStore, store => store.isAuthenticated);
   
   return (
     <QuantaProvider stores={{ user: userStore, dashboard: dashboardStore }}>

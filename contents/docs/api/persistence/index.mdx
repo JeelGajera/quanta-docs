@@ -1,111 +1,33 @@
 ---
 title: Persistence
-description: API reference for the persistence system in QuantaJS.
+description: API reference for QuantaJS persistence.
 ---
 
-# Persistence
+# Persistence API
 
-QuantaJS provides a powerful persistence system that automatically saves and restores store state across browser sessions, with support for multiple storage adapters, data migrations, and cross-tab synchronization.
+QuantaJS persistence automatically saves and rehydrates store state with adapter-based storage.
 
-## Overview
+## Exports
 
-The persistence system consists of:
-
-- **Persistence Manager**: Core functionality for managing persisted state
-- **Storage Adapters**: Different storage backends (localStorage, sessionStorage, IndexedDB)
-- **Migration System**: Handle schema changes across versions
-- **Cross-tab Sync**: Synchronize state across multiple browser tabs
-
-## Core API
-
-### `createPersistenceManager`
-
-Creates a persistence manager for a store with automatic state saving and loading.
-
-```typescript
-function createPersistenceManager<T extends Record<string, any>>(
-  getState: () => T,
-  setState: (newState: Partial<T>) => void,
-  notifySubscribers: () => void,
-  config: PersistenceConfig<T>,
-  storeName?: string
-): PersistenceManager
+```ts
+import {
+  createPersistenceManager,
+  LocalStorageAdapter,
+  SessionStorageAdapter,
+  IndexedDBAdapter,
+  MigrationManager,
+  createMigrationManager,
+  CommonMigrations,
+} from '@quantajs/core';
 ```
 
-#### Parameters
+## `PersistenceConfig<T>`
 
-- `getState`: Function that returns the current state
-- `setState`: Function to update state with new values
-- `notifySubscribers`: Function to notify store subscribers of changes
-- `config`: Persistence configuration object
-- `storeName`: Optional name for the store (used for debugging)
-
-#### Returns
-
-A `PersistenceManager` instance with methods for manual persistence control.
-
-## Storage Adapters
-
-### `LocalStorageAdapter`
-
-Persists data to browser's localStorage with cross-tab synchronization.
-
-```typescript
-class LocalStorageAdapter implements PersistenceAdapter {
-  constructor(key: string)
-}
-```
-
-**Features:**
-- Automatic JSON serialization/deserialization
-- Cross-tab synchronization via storage events
-- Handles quota exceeded errors gracefully
-
-### `SessionStorageAdapter`
-
-Persists data to browser's sessionStorage (cleared when tab closes).
-
-```typescript
-class SessionStorageAdapter implements PersistenceAdapter {
-  constructor(key: string)
-}
-```
-
-**Features:**
-- Data persists only for the current browser session
-- Useful for temporary state that shouldn't persist across sessions
-
-> **Note:** Unlike `LocalStorageAdapter`, `SessionStorageAdapter` does not support cross-tab synchronization because `storage` events do not fire for `sessionStorage` changes within the same tab.
-
-### `IndexedDBAdapter`
-
-Persists data to IndexedDB for larger datasets and better performance.
-
-```typescript
-class IndexedDBAdapter implements PersistenceAdapter {
-  constructor(
-    key: string,
-    dbName?: string,
-    storeName?: string,
-    version?: number
-  )
-}
-```
-
-**Features:**
-- Handles large amounts of data efficiently
-- Asynchronous operations
-- Better performance for complex data structures
-
-## Configuration Options
-
-### `PersistenceConfig`
-
-```typescript
+```ts
 interface PersistenceConfig<T = any> {
   adapter: PersistenceAdapter;
-  serialize?: (data: T) => string;
-  deserialize?: (data: string) => T;
+  serialize?: (data: any) => string;
+  deserialize?: (data: string) => any;
   migrations?: Record<number, (data: any) => any>;
   version?: number;
   debounceMs?: number;
@@ -115,67 +37,98 @@ interface PersistenceConfig<T = any> {
     in?: (data: any) => any;
     out?: (data: any) => any;
   };
-  onError?: (error: Error, operation: 'read' | 'write' | 'remove') => void;
+  onError?: (
+    error: Error,
+    operation: 'read' | 'write' | 'remove' | 'watch-setup'
+  ) => void;
   validator?: (data: any) => boolean;
 }
 ```
 
-#### Configuration Properties
+## Adapter Classes
 
-- **`adapter`**: Storage adapter to use (required)
-- **`serialize`**: Custom serialization function (defaults to `JSON.stringify`)
-- **`deserialize`**: Custom deserialization function (defaults to `JSON.parse`)
-- **`migrations`**: Version migration functions for schema changes
-- **`version`**: Current data schema version (defaults to 1)
-- **`debounceMs`**: Debounce delay for save operations (defaults to 300ms)
-- **`include`**: Array of state properties to persist (if not specified, all properties are persisted)
-- **`exclude`**: Array of state properties to exclude from persistence
-- **`transform`**: Data transformation functions for input/output
-- **`onError`**: Error handler for persistence operations
-- **`validator`**: Function to validate data before saving/after loading
+### `LocalStorageAdapter`
 
-## Migration System
+```ts
+const adapter = new LocalStorageAdapter('app-store');
+```
 
-### `MigrationManager`
+- Uses browser `localStorage`
+- Supports cross-tab sync through `storage` events
 
-Handles schema changes across different versions of your data.
+### `SessionStorageAdapter`
 
-```typescript
-class MigrationManager<T = any> {
-  constructor(migrations: MigrationDefinition<T>[] = [])
-  
-  addMigration(version: number, migrate: MigrationFunction<T>): void
-  removeMigration(version: number): void
-  getVersions(): number[]
-  hasMigration(version: number): boolean
-  getHighestVersion(): number
-  migrate(data: any, fromVersion: number, toVersion: number): any
-  validateMigrations(): { valid: boolean; errors: string[] }
+```ts
+const adapter = new SessionStorageAdapter('session-store');
+```
+
+- Uses browser `sessionStorage`
+- Session-scoped persistence
+
+### `IndexedDBAdapter`
+
+```ts
+const adapter = new IndexedDBAdapter('store-key', 'app-db', 'stores', 1);
+```
+
+- Async persistence for larger datasets
+- Better fit for high-volume/local-first workloads
+
+## Store-Level Usage
+
+```ts
+import { createStore, LocalStorageAdapter } from '@quantajs/core';
+
+const userStore = createStore('user', {
+  state: () => ({
+    profile: null as null | { id: string; name: string },
+    theme: 'light' as 'light' | 'dark',
+  }),
+  persist: {
+    adapter: new LocalStorageAdapter('user-store-v1'),
+    version: 1,
+    include: ['profile', 'theme'],
+    debounceMs: 250,
+  },
+});
+```
+
+## Validation and Transform
+
+```ts
+persist: {
+  adapter: new LocalStorageAdapter('settings-v2'),
+  transform: {
+    out: (data) => ({ ...data, savedAt: Date.now() }),
+    in: (data) => ({ ...data, savedAt: undefined }),
+  },
+  validator: (data) => typeof data === 'object' && data !== null,
+  onError(error, operation) {
+    console.warn('Persistence error:', operation, error.message);
+  },
 }
 ```
 
-### Common Migration Patterns
+## Migrations
 
-```typescript
+```ts
 import { CommonMigrations } from '@quantajs/core';
 
-const migrations = {
-  2: CommonMigrations.addProperty('settings', { theme: 'light' }),
-  3: CommonMigrations.renameProperty('user', 'currentUser'),
-  4: CommonMigrations.transformProperty('todos', (todos) => 
-    todos.map(todo => ({ ...todo, priority: 'medium' }))
-  ),
-  5: CommonMigrations.removeProperty('deprecatedField'),
-};
+persist: {
+  adapter: new LocalStorageAdapter('app-store'),
+  version: 3,
+  migrations: {
+    2: CommonMigrations.addProperty('featureFlags', {}),
+    3: CommonMigrations.renameProperty('user', 'currentUser'),
+  },
+}
 ```
 
-## Persistence Manager
+## `PersistenceManager`
 
-### `PersistenceManager`
+When persistence is enabled, stores expose `store.$persist`:
 
-Interface for controlling persistence operations.
-
-```typescript
+```ts
 interface PersistenceManager {
   save(): Promise<void>;
   load(): Promise<void>;
@@ -186,206 +139,9 @@ interface PersistenceManager {
 }
 ```
 
-#### Methods
+## Behavior Notes
 
-- **`save()`**: Manually trigger a save operation
-- **`load()`**: Manually trigger a load operation
-- **`clear()`**: Remove all persisted data
-- **`getAdapter()`**: Get the underlying storage adapter
-- **`isRehydrated()`**: Check if initial data has been loaded
-- **`destroy()`**: Clean up persistence resources (stops watchers, removes cross-tab sync, cancels pending saves)
-
-## Basic Usage
-
-### Simple Persistence
-
-```javascript
-import { createStore, LocalStorageAdapter } from '@quantajs/core';
-
-const store = createStore('user', {
-  state: () => ({
-    name: '',
-    email: '',
-    preferences: { theme: 'light' }
-  }),
-  persist: {
-    adapter: new LocalStorageAdapter('user-store'),
-    version: 1,
-    debounceMs: 500
-  }
-});
-```
-
-### Advanced Persistence with Migrations
-
-```javascript
-import { createStore, LocalStorageAdapter, CommonMigrations } from '@quantajs/core';
-
-const store = createStore('app', {
-  state: () => ({
-    user: null,
-    settings: { theme: 'light', language: 'en' },
-    todos: []
-  }),
-  persist: {
-    adapter: new LocalStorageAdapter('app-store'),
-    version: 3,
-    debounceMs: 300,
-    include: ['user', 'settings'], // Only persist user and settings
-    exclude: ['todos'], // Explicitly exclude todos
-    migrations: {
-      2: CommonMigrations.addProperty('settings', { language: 'en' }),
-      3: CommonMigrations.renameProperty('theme', 'appTheme')
-    },
-    onError: (error, operation) => {
-      console.error(`Persistence ${operation} failed:`, error);
-    }
-  }
-});
-```
-
-### Custom Serialization
-
-```javascript
-const store = createStore('complex', {
-  state: () => ({
-    dates: [new Date()],
-    functions: [() => console.log('test')]
-  }),
-  persist: {
-    adapter: new LocalStorageAdapter('complex-store'),
-    serialize: (data) => {
-      // Custom serialization to handle Date objects
-      return JSON.stringify(data, (key, value) => {
-        if (value instanceof Date) {
-          return { __type: 'Date', value: value.toISOString() };
-        }
-        return value;
-      });
-    },
-    deserialize: (data) => {
-      // Custom deserialization to restore Date objects
-      return JSON.parse(data, (key, value) => {
-        if (value && value.__type === 'Date') {
-          return new Date(value.value);
-        }
-        return value;
-      });
-    }
-  }
-});
-```
-
-### Data Validation
-
-```javascript
-const store = createStore('validated', {
-  state: () => ({
-    count: 0,
-    name: ''
-  }),
-  persist: {
-    adapter: new LocalStorageAdapter('validated-store'),
-    validator: (data) => {
-      // Ensure count is a number and name is a string
-      return typeof data.count === 'number' && 
-             typeof data.name === 'string' &&
-             data.count >= 0;
-    },
-    onError: (error, operation) => {
-      if (operation === 'read') {
-        // If validation fails on read, reset to defaults
-        store.$reset();
-      }
-    }
-  }
-});
-```
-
-## Cross-tab Synchronization
-
-The `LocalStorageAdapter` supports cross-tab synchronization automatically via `storage` events. When data changes in one tab, other tabs are automatically updated:
-
-```javascript
-// Tab 1
-store.name = 'John';
-
-// Tab 2 automatically receives the update
-console.log(store.name); // 'John'
-```
-
-> **Note:** Cross-tab sync is only available with `LocalStorageAdapter`. `SessionStorageAdapter` does not support cross-tab sync, and `IndexedDBAdapter` does not have a built-in change notification mechanism.
-
-## Error Handling
-
-The persistence system provides comprehensive error handling:
-
-```javascript
-const store = createStore('robust', {
-  state: () => ({ data: [] }),
-  persist: {
-    adapter: new LocalStorageAdapter('robust-store'),
-    onError: (error, operation) => {
-      switch (operation) {
-        case 'read':
-          console.warn('Failed to load persisted state, using defaults');
-          break;
-        case 'write':
-          console.error('Failed to save state:', error);
-          // Optionally show user notification
-          break;
-        case 'remove':
-          console.error('Failed to clear persisted data:', error);
-          break;
-      }
-    }
-  }
-});
-```
-
-## Performance Considerations
-
-### Debouncing
-
-The persistence system automatically debounces save operations to prevent excessive writes:
-
-```javascript
-const store = createStore('performance', {
-  state: () => ({ counter: 0 }),
-  persist: {
-    adapter: new LocalStorageAdapter('performance-store'),
-    debounceMs: 1000 // Save only after 1 second of inactivity
-  }
-});
-
-// Rapid changes will be batched
-for (let i = 0; i < 100; i++) {
-  store.counter++;
-}
-// Only one save operation will occur after 1 second
-```
-
-### Selective Persistence
-
-Only persist necessary data to improve performance:
-
-```javascript
-const store = createStore('selective', {
-  state: () => ({
-    user: null,
-    temporaryData: [],
-    cache: new Map()
-  }),
-  persist: {
-    adapter: new LocalStorageAdapter('selective-store'),
-    include: ['user'], // Only persist user data
-    exclude: ['temporaryData', 'cache'] // Explicitly exclude large objects
-  }
-});
-```
-
-## Learn More
-
-- [Persistence Guide](/docs/guides/persistence) - Comprehensive guide to using persistence
-- [Storage Adapters](/docs/api/persistence/adapters) - Detailed adapter documentation
-- [Best Practices](/docs/best-practices/persistence) - Persistence best practices
+- Rehydration is attempted automatically during store setup.
+- Invalid/malformed payloads are safely rejected and routed to `onError`.
+- Cross-tab sync behavior depends on adapter capabilities.
+- Call `destroy()` to clean up persistence watchers/listeners for disposed stores.

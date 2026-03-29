@@ -412,11 +412,11 @@ In React applications, combine QuantaJS side effects with React hooks:
 
 ```javascript
 import { useEffect } from 'react';
-import { useQuantaStore } from '@quantajs/react';
+import { useQuantaSelector } from '@quantajs/react';
 
 function UserProfile() {
-  const user = useQuantaStore(userStore, store => store.user);
-  const isLoading = useQuantaStore(userStore, store => store.isLoading);
+  const user = useQuantaSelector(userStore, store => store.user);
+  const isLoading = useQuantaSelector(userStore, store => store.isLoading);
   
   // React-specific side effects
   useEffect(() => {

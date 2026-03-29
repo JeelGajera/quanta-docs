@@ -14,9 +14,12 @@ function Nucleus() {
     const meshRef = useRef<THREE.Mesh>(null);
 
     useGSAP(() => {
+        const mesh = meshRef.current;
+        if (!mesh) return;
+
         // Scroll interaction for Nucleus
         // Phase 2: Explode/Expand
-        gsap.to(meshRef.current?.scale!, {
+        gsap.to(mesh.scale, {
             x: 0.1, y: 0.1, z: 0.1,
             scrollTrigger: {
                 trigger: "#scroll-container",
